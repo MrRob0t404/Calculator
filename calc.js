@@ -1,8 +1,9 @@
 var outputDiv;
-var equation = '';
+var lastInput;
+var calculator;
 var numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 var operators = ['+', '-', '*', '/'];
-var operations = ['add', 'sub', 'mul', 'div']
+var operations = ['add', 'sub', 'mul', 'div'];
 
 /**
  * @function calculate
@@ -11,45 +12,98 @@ var operations = ['add', 'sub', 'mul', 'div']
  */
 function calculate(mathExp) {
   try {
-    return eval(mathExp)
-  } catch (error) {
-    return NaN
+    return eval(mathExp);
+  } catch (e) {
+    return NaN;
   }
 }
 
+/**
+ * @function getOperator
+ * @param  {string} elementId "add", "div", "sub", "mul"
+ * @param {string} operator  "+", "/", "-", "*" 
+ */
+function getOperator(operatorId) {
+  switch (operatorId) {
+    case 'add':
+      return '+';
+      break;
+    case 'sub':
+      return '-';
+      break;
+    case 'mul':
+      return '*';
+      break;
+    case 'div':
+      return '/';
+      break;
+  }
+}
+
+function setMemory(value) {
+  window.localStorage.setItem('memory', value)
+  var memoryDiv = document.getElementById('memory');
+  if (Number(value)) {
+    memoryDiv.classList.remove('hidden')
+  } else {
+    memoryDiv.classList.add('hidden')
+  }
+}
+
+var isResultShown = false;
 
 document.addEventListener('DOMContentLoaded', function () {
+  setMemory(window.localStorage.getItem('memory'))
   outputDiv = document.getElementById('output');
-
-  document.addEventListener('click', function (event) {
+  calculator = document.getElementById('calc')
+  calculator.addEventListener('click', function (event) {
     var elementId = event.target.id;
-
-    if (numbers.includes(elementId)) {
-      outputDiv.innerText += elementId;
-    }
-
-    if (elementId === 'eq') {
-      outputDiv.innerText = calculate(equation);
-    } else if (numbers.indexOf(elementId) !== -1) {
-      equation += numbers[numbers.indexOf(elementId)];
-    } else {
-      equation += operators[operations.indexOf(elementId)]; 
-      outputDiv.innerText += operators[operations.indexOf(elementId)];
-    }
-
-    if(elementId === 'clr'){
-      equation = '';
-      outputDiv.innerText = ''
-    }
-
-    // if (elementId === 'eq') {
-    //   calculate(equation)
-    // }
-
     // logging the element id for debug purposes
-    console.log(elementId)
-    // console.log(outputDiv)
-    console.log(equation)
-    // console.log(calculate(equation))
+    console.log(elementId);
+    if (elementId === 'clr') {
+      outputDiv.innerText = '';
+      isResultShown = false;
+    } else if (elementId === 'eq') {
+      var result = calculate(outputDiv.innerText).toString();
+      var maxLength = 11
+      if (result.length <= maxLength) {
+        outputDiv.innerText = result
+      } else {
+        outputDiv.innerText = result.slice(0, maxLength)
+      }
+      isResultShown = true;
+    } else if (elementId === 'ms') {
+      setMemory(outputDiv.innerText)
+    } else if (elementId === 'mr') {
+      outputDiv.innerText = window.localStorage.getItem('memory')
+      isResultShown = true;
+    } else if (elementId === 'mp') {
+      var prev = window.localStorage.getItem('memory')
+      setMemory(Number(outputDiv.innerText) + Number(prev))
+    } else if (elementId === 'del') {
+      if (isResultShown) {
+        outputDiv.innerText = '';
+      } else {
+        outputDiv.innerText = outputDiv.innerText.slice(0, -1);
+      }
+      isResultShown = false;
+    } else if (outputDiv.innerText.length <= 11) {
+      if (numbers.includes(elementId)) {
+        if (isResultShown) {
+          outputDiv.innerText = elementId;
+        } else {
+          outputDiv.innerText += elementId;
+        }
+      } else if (operations.includes(elementId)) {
+        var output = outputDiv.innerText;
+        var last = output[output.length - 1];
+        if (operators.includes(last)) {
+          outputDiv.innerText = output.slice(0, -1) + getOperator(elementId);
+        } else {
+          outputDiv.innerText += getOperator(elementId)
+        }
+      }
+      isResultShown = false;
+    }
   })
 })
